@@ -1,0 +1,22 @@
+{% load static %}
+<form id="registration-form" method="POST">
+    {% csrf_token %}
+    <input type="text" name="name" placeholder="Full Name" required>
+    <input type="email" name="email" placeholder="Email" required>
+    <input type="text" name="phone" placeholder="Phone" required>
+    <input type="checkbox" name="accepted_terms" required>
+    <label for="accepted_terms">I accept the terms</label>
+    <button type="submit">Submit</button>
+</form>
+<script>
+    document.getElementById("registration-form").onsubmit = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const response = await fetch('/api/submit/', {
+            method: 'POST',
+            body: formData,
+        });
+        const result = await response.json();
+        alert(result.message);
+    };
+</script>
