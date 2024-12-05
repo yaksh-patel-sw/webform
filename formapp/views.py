@@ -1,7 +1,9 @@
+import json
 from django.http import JsonResponse
 from django.shortcuts import render
 from .models import Registration
 from .forms import ContactForm
+from django.views.decorators.csrf import csrf_exempt
 import random
 import string
 
@@ -24,27 +26,32 @@ def register(request):
         )
         return JsonResponse({'message': 'Registration successful!', 'view_link': view_link})
     
-def contact_view(request):
+
+def home(request):
     if request.method == 'POST':
-        form = ContactForm(request.POST)
+        # Get form data from the request body
+        data = json.loads(request.body)
+        email = data.get('email')
+        phone = data.get('phone')
 
-        if form.is_valid():
-            # Retrieve form data
-            name = form.cleaned_data['name']
-            email = form.cleaned_data['email']
-            message = form.cleaned_data['message']
-            phone = form.cleaned_data['phone']
-            accepted_terms = form.cleaned_data['accepted_terms']
+        # Check if the email or phone already exists
+        if Registration.objects.filter(email=email).exists() or Registration.objects.filter(phone=phone).exists():
+            return JsonResponse({'message': 'Email or Phone already exists!'}, status=400)
 
-            # Handle the form submission logic (save data or send email)
-            # You can store the phone number and accepted terms as needed
-            
-            # Assuming a successful form submission
-            return JsonResponse({'message': 'Form submitted successfully!'})
+        # Generate the view link
+        view_link = f"https://streamyard.com/{generate_link()}"
+        
+        # Create the registration
+        Registration.objects.create(
+            name=data.get('name'),
+            email=email,
+            phone=phone,
+            accepted_terms=True,
+            view_link=view_link
+        )
 
-    else:
-        form = ContactForm()
+        # Return success response with view link
+        return JsonResponse({'message': 'Registration successful!', 'view_link': view_link})
 
-    return render(request, 'contact.html', {'form': form})
 
 
